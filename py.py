@@ -2,14 +2,14 @@ import cv2
 import numpy as np
 import os
 from matplotlib import pyplot as plt
-import time
+
 import mediapipe as mp
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 from tensorflow.keras.callbacks import TensorBoard
-from scipy import stats
+
 
 
 
@@ -64,41 +64,12 @@ def extract_keypoints(results):
     return np.concatenate([pose, face, lh, rh])
 
 
-# Path for exported data, numpy arrays
-DATA_PATH = os.path.join('MP_Data_ideal_final2') 
-
 # Actions that we try to detect
 actions = np.array(['hello', 'thanks', 'love_it', 'ideal'])
 
-# Thirty videos worth of data
-no_sequences = 30
 
-# Videos are going to be 30 frames in length
-sequence_length = 30
-
-# Folder start
-start_folder = 0
-
-
-label_map = {label:num for num, label in enumerate(actions)}
-
-
-log_dir = os.path.join('Logs')
-tb_callback = TensorBoard(log_dir=log_dir)
-
-model = Sequential()
-model.add(LSTM(64, return_sequences=True, activation='relu', input_shape=(30,1662)))
-model.add(LSTM(128, return_sequences=True, activation='relu'))
-model.add(LSTM(64, return_sequences=False, activation='relu'))
-model.add(Dense(64, activation='relu'))
-model.add(Dense(32, activation='relu'))
-model.add(Dense(actions.shape[0], activation='softmax'))
-
-
-model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['categorical_accuracy'])
-
-
-model.load_weights('D:\\Sign_Lang\\ActionDetectionforSignLanguage-main\\action_f.h5')
+from tensorflow.keras.models import load_model
+model = load_model('/content/Sign_Lang/action_f.h5')
 
 colors = [(245,117,16), (117,245,16), (16,117,245), (0,0,0)]
 def prob_viz(res, actions, input_frame, colors):
