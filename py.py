@@ -1,17 +1,19 @@
 import cv2
 import numpy as np
-import os
 from matplotlib import pyplot as plt
-
 import mediapipe as mp
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 from tensorflow.keras.callbacks import TensorBoard
+import time
 
+import sys
 
-
+# Redirect stdout and stderr to a log file
+sys.stdout = open('stdout.log', 'w')
+sys.stderr = open('stderr.log', 'w')
 
 
 
@@ -64,12 +66,14 @@ def extract_keypoints(results):
     return np.concatenate([pose, face, lh, rh])
 
 
-# Actions that we try to detect
 actions = np.array(['hello', 'thanks', 'love_it', 'ideal'])
-
+print(actions)
+# # Thirty videos worth of data
 
 from tensorflow.keras.models import load_model
-model = load_model('/content/Sign_Lang/action_f.h5')
+model = load_model('action_f.h5')
+##make proper connection
+
 
 colors = [(245,117,16), (117,245,16), (16,117,245), (0,0,0)]
 def prob_viz(res, actions, input_frame, colors):
@@ -80,7 +84,7 @@ def prob_viz(res, actions, input_frame, colors):
         
     return output_frame
 
-
+print("Start")
 # 1. New detection variables
 sequence = []
 sentence = []
@@ -88,10 +92,13 @@ predictions = []
 threshold = 0.5
 
 cap = cv2.VideoCapture(0)
+print("Hold")
+time.sleep(2)
+print("continue")
 # Set mediapipe model 
 with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
     while cap.isOpened():
-
+        print("inside main")
         # Read feed
         ret, frame = cap.read()
 
@@ -120,6 +127,7 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
                     if len(sentence) > 0: 
                         if actions[np.argmax(res)] != sentence[-1]:
                             sentence.append(actions[np.argmax(res)])
+                            print("Deep")
                     else:
                         sentence.append(actions[np.argmax(res)])
             if len(sentence) > 5: 
@@ -127,16 +135,23 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
                 
             # Viz probabilities
             image = prob_viz(res, actions, image, colors)
-            
+        else:
+            print("squence enght nt 30")   
         cv2.rectangle(image, (0,0), (640, 40), (245, 117, 16), -1)
         cv2.putText(image, ' '.join(sentence), (3,30), 
                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
         
-        # Show to screen
+        
         cv2.imshow('OpenCV Feed', image)
         
-        # Break gracefully
+        
         if cv2.waitKey(10) & 0xFF == ord('q'):
+            print("q pressed")
             break
+    else:
+        print("Deactivated")
     cap.release()
     cv2.destroyAllWindows()
+    
+sys.stdout.close()
+sys.stderr.close()
